@@ -1,90 +1,67 @@
-import { useState } from 'react';
-import type { ChangeEvent, KeyboardEvent } from 'react';
+import React, { useState } from 'react';
 import { Button } from '../ui/button';
-import type { Todo } from '../../hooks/useTodos';
+import { Input } from '../ui/input';
+
+export interface Todo {
+  id: number;
+  text: string;
+  completed: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
 interface TodoItemProps {
   todo: Todo;
-  onUpdate: (id: number, updates: Partial<Omit<Todo, 'id'>>) => void;
+  onUpdate: (id: number, updates: Partial<Pick<Todo, 'text' | 'completed'>>) => void;
   onDelete: (id: number) => void;
 }
 
-export default function TodoItem({
-  todo,
-  onUpdate,
-  onDelete
-}: TodoItemProps) {
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [editText, setEditText] = useState<string>(todo.text);
+const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) => {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(todo.text);
 
-  const handleToggleComplete = () => {
+  const toggleComplete = () => {
     onUpdate(todo.id, { completed: !todo.completed });
   };
 
-  const handleSave = () => {
-    const trimmed = editText.trim();
-    if (!trimmed) return;
-    onUpdate(todo.id, { text: trimmed });
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditText(todo.text);
-  };
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setEditText(e.target.value);
-  };
-
-  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSave();
-    } else if (e.key === 'Escape') {
-      handleCancel();
-    }
+  const saveEdit = () => {
+    if (!editText.trim()) return;
+    onUpdate(todo.id, { text: editText.trim() });
+    setEditing(false);
   };
 
   return (
-    <li className="flex items-center justify-between p-3 bg-gray-50 rounded border">
-      {isEditing ? (
-        <div className="flex gap-2 items-center flex-1">
-          <input
-            className="flex-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+    <li className="flex items-center justify-between p-2 border rounded">
+      {editing ? (
+        <>
+          <Input
+            className="flex-1 mr-2"
             value={editText}
-            onChange={handleChange}
-            onKeyPress={handleKeyPress}
-            autoFocus
+            onChange={e => setEditText(e.target.value)}
           />
-          <Button onClick={handleSave}>Save</Button>
-          <Button onClick={handleCancel} className="bg-gray-500 hover:bg-gray-600">
+          <Button onClick={saveEdit}>Save</Button>
+          <Button variant="ghost" onClick={() => setEditing(false)}>
             Cancel
           </Button>
-        </div>
+        </>
       ) : (
         <>
-          <div className="flex items-center gap-3">
+          <label className="flex items-center flex-1">
             <input
               type="checkbox"
               checked={todo.completed}
-              onChange={handleToggleComplete}
-              className="w-4 h-4"
+              onChange={toggleComplete}
+              className="mr-2"
             />
-            <span className={`${todo.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+            <span className={todo.completed ? 'line-through' : ''}>
               {todo.text}
             </span>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => setIsEditing(true)}
-              className="bg-green-500 hover:bg-green-600 text-sm px-3 py-1"
-            >
+          </label>
+          <div className="flex space-x-1">
+            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
               Edit
             </Button>
-            <Button 
-              onClick={() => onDelete(todo.id)}
-              className="bg-red-500 hover:bg-red-600 text-sm px-3 py-1"
-            >
+            <Button variant="destructive" size="sm" onClick={() => onDelete(todo.id)}>
               Delete
             </Button>
           </div>
@@ -92,4 +69,6 @@ export default function TodoItem({
       )}
     </li>
   );
-}
+};
+
+export default TodoItem;

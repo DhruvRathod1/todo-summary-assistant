@@ -1,46 +1,90 @@
-import type { Todo } from '../hooks/useTodos';
+// src/services/api.ts
+import axios from 'axios';
+import type { Todo } from '../components/TodoItem/TodoItem';
 
-const API_BASE = process.env.REACT_APP_API_URL || '';
+const API_BASE = import.meta.env.VITE_API_URL
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_BASE,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor for logging
+api.interceptors.request.use(
+  (config) => {
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    return config;
+  },
+  (error) => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for logging
+api.interceptors.response.use(
+  (response) => {
+    console.log(`API Response: ${response.status} ${response.config.url}`);
+    return response;
+  },
+  (error) => {
+    console.error('API Response Error:', error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
 
 export async function getTodos(): Promise<Todo[]> {
-  const res = await fetch(`${API_BASE}/todos`);
-  if (!res.ok) throw new Error('Failed to fetch todos');
-  return res.json();
+  try {
+    const res = await api.get<Todo[]>('/todos');
+    return res.data;
+  } catch (error) {
+    console.error('Failed to fetch todos:', error);
+    throw new Error('Failed to fetch todos');
+  }
 }
 
 export async function createTodo(text: string): Promise<Todo> {
-  const res = await fetch(`${API_BASE}/todos`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text })
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to create todo');
-  return data;
+  try {
+    const res = await api.post<Todo>('/todos', { text });
+    return res.data;
+  } catch (error) {
+    console.error('Failed to create todo:', error);
+    throw new Error('Failed to create todo');
+  }
 }
 
 export async function updateTodo(
   id: number,
   updates: Partial<Omit<Todo, 'id'>>
 ): Promise<Todo> {
-  const res = await fetch(`${API_BASE}/todos/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(updates)
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to update todo');
-  return data;
+  try {
+    const res = await api.patch<Todo>(`/todos/${id}`, updates);
+    return res.data;
+  } catch (error) {
+    console.error('Failed to update todo:', error);
+    throw new Error('Failed to update todo');
+  }
 }
 
 export async function deleteTodo(id: number): Promise<void> {
-  const res = await fetch(`${API_BASE}/todos/${id}`, { method: 'DELETE' });
-  if (!res.ok && res.status !== 204) throw new Error('Failed to delete todo');
+  try {
+    await api.delete(`/todos/${id}`);
+  } catch (error) {
+    console.error('Failed to delete todo:', error);
+    throw new Error('Failed to delete todo');
+  }
 }
 
-export async function summarizeTodos(): Promise<any> {
-  const res = await fetch(`${API_BASE}/summarize`, { method: 'POST' });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to send summary');
-  return data;
+export async function summarize(): Promise<{ message: string; summary?: string }> {
+  try {
+    const res = await api.post<{ message: string; summary?: string }>('/summarize');
+    return res.data;
+  } catch (error) {
+    console.error('Failed to generate summary:', error);
+    throw new Error('Failed to generate summary');
+  }
 }
