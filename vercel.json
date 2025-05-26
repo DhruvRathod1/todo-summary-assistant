@@ -1,1 +1,22 @@
-{ "rewrites": [{ "source": "/(.*)", "destination": "/" }] }
+{
+  "projects": {
+    "frontend": {
+      "rootDirectory": "frontend"
+    }
+  },
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:match*",
+      "destination": "/api/:match*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/frontend/:path*"
+    }
+  ]
+}
