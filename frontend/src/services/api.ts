@@ -2,15 +2,17 @@
 import axios from 'axios';
 import type { Todo } from '../components/TodoItem/TodoItem';
 
-const API_BASE = import.meta.env.VITE_API_URL
+// strip trailing slash or fallback to localhost:5000
+const API_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/$/, '') ||
+  'http://localhost:5000';
 
-// Create axios instance with default config
+console.log('📡 API_BASE =', API_BASE);
+
 const api = axios.create({
   baseURL: API_BASE,
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 // Request interceptor for logging
